@@ -1,0 +1,2550 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Kalkulator Warung</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+/* ===== VARIABEL & RESET ===== */
+:root {
+  --primary: #3498db;
+  --secondary: #2ecc71;
+  --danger: #e74c3c;
+  --warning: #f39c12;
+  --light: #ecf0f1;
+  --dark: #2c3e50;
+  --border-radius: 10px;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+/* ===== LAYOUT UTAMA ===== */
+.container {
+  max-width: 800px;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  position: relative;
+  margin: 20px auto;
+  padding: 0;
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+}
+
+/* ===== HEADER ===== */
+h2 {
+  text-align: center;
+  font-size: 2rem;
+  color: var(--dark);
+  margin: 25px 0;
+  padding-bottom: 15px;
+  border-bottom: 2px dashed #eee;
+  position: relative;
+}
+
+h2::after {
+  content: '💸';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ===== SEARCH SECTION ===== */
+#search {
+  width: 85%;
+  padding: 12px 15px;
+  border: 2px solid var(--primary);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  margin-bottom: 15px;
+  margin-left: 10px;
+  transition: var(--transition);
+  background: rgba(52, 152, 219, 0.05);
+}
+
+#search:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+  border-color: var(--primary);
+}
+
+/* ===== CARD STYLES ===== */
+.keranjang, .total, .input-barang, .tambah-stok, 
+.update-harga, .riwayat, .storage-info {
+  padding: 20px;
+  margin: 15px;
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+/* ===== TABLE STYLES ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+  background: white;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+th {
+  background: var(--primary);
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+tr:hover {
+  background: rgba(52, 152, 219, 0.05);
+}
+
+/* ===== BUTTON STYLES ===== */
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+  width: 100%;
+  margin: 8px 0;
+}
+
+button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+button[onclick="exportRiwayatKeTXT()"] {
+  background: var(--secondary);
+}
+
+button[onclick="resetRiwayat()"] {
+  background: var(--danger);
+}
+
+/* ===== INPUT STYLES ===== */
+input, select {
+  width: 90%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  margin: 8px 0;
+  transition: var(--transition);
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+/* ===== TOTAL SECTION ===== */
+.total {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  text-align: center;
+}
+
+.total p {
+  font-size: 1.2rem;
+  margin: 10px 0;
+}
+
+.total p span {
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/* ===== SECTION KHUSUS ===== */
+.tambah-stok {
+  background: #e8f5e9;
+  border-left: 4px solid var(--secondary);
+}
+
+.update-harga {
+  background: #fff8e1;
+  border-left: 4px solid var(--warning);
+}
+
+.input-barang {
+  border-left: 4px solid var(--primary);
+}
+
+/* ===== STORAGE BAR ===== */
+.storage-bar {
+  height: 10px;
+  background: #eee;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.used {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transition: width 0.5s ease;
+  display: block;
+}
+.btn-backup {
+  background: #3498db;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+.btn-backup:hover {
+  background: #2980b9;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#results, #keranjangTabel, #riwayatList {
+  animation: fadeIn 0.5s ease;
+}
+
+/* ===== TABEL PENCARIAN BARANG (Responsif) ===== */
+#results table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 15px;
+}
+
+#results th {
+  background: var(--primary);
+  color: white;
+  padding: 10px;
+  text-align: left;
+}
+
+#results td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Responsif: Tabel jadi scroll horizontal di HP */
+@media (max-width: 600px) {
+  #results {
+    overflow-x: auto;
+  }
+  
+  #results table {
+    font-size: 14px;
+    min-width: 600px; /* Memaksa scroll jika layar kecil */
+  }
+  
+  #results td {
+    padding: 8px 5px;
+  }
+}
+
+/* ===== KERANJANG BELANJA (Responsif) ===== */
+#keranjangTabel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#keranjangTabel th {
+  background: var(--primary);
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+#keranjangTabel td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Responsif: Keranjang menyesuaikan layar kecil */
+@media (max-width: 600px) {
+  #keranjangTabel table {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  #keranjangTabel th, 
+  #keranjangTabel td {
+    padding: 8px;
+    font-size: 14px;
+  }
+  
+  #keranjangTabel button {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+}
+/* Scanner Section */
+.scanner-section {
+  background: var(--dark);
+  padding: 15px;
+  border-radius: var(--border-radius);
+  margin-bottom: 20px;
+}
+
+.btn-scanner {
+  background: var(--secondary);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  margin: 10px 0;
+  width: 100%;
+}
+
+#qr-reader {
+  margin: 0 auto;
+}
+
+#qr-reader__dashboard_section_csr {
+  background: white !important;
+}
+/* Style Form Tambah Barcode */
+.tambah-barcode {
+  padding: 20px;
+  margin: 15px;
+  background: #e3f2fd;
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--primary);
+}
+
+.select-barang {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  margin-bottom: 10px;
+}
+#cariBarangBarcode {
+  width: 90%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  margin-bottom: 10px;
+}
+
+datalist {
+  width: 100%;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 0 0 5px 5px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+datalist option {
+  padding: 8px;
+  cursor: pointer;
+}
+
+datalist option:hover {
+  background: #f0f0f0;
+}
+/* Di file warung_indexdb.css atau <style> di head */
+.storage-warning {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 15px;
+  margin: 15px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.storage-warning button {
+  padding: 5px 10px !important;
+  margin: 0 !important;
+}
+
+.btn-close {
+  background: #f8f9fa !important;
+  color: #333 !important;
+}
+/* CSS untuk tombol backup CSV */
+button[onclick="backupDataKeCSV()"] {
+  background: #27ae60; /* Warna hijau */
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+  width: 100%;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+button[onclick="backupDataKeCSV()"]:hover {
+  background: #219653;
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* Icon CSV */
+button[onclick="backupDataKeCSV()"]::before {
+  content: "📊";
+  font-size: 1.1em;
+}
+
+/* Responsive Mobile */
+@media (max-width: 600px) {
+  button[onclick="backupDataKeCSV()"] {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+/* ===== TABS CHART ===== */
+.chart-tabs {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+.tab-button {
+  background: #ecf0f1;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: var(--transition);
+  flex: 1;
+  text-align: center;
+}
+
+.tab-button.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* Responsif */
+@media (max-width: 600px) {
+  .tab-button {
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+}
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+  background: white;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.btn-chart {
+  background: #9b59b6;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 10px;
+  width: 95%;
+}
+
+/* Tombol dalam modal */
+.chart-tabs button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+/* Gaya Menu Toggle */
+.menu-header {
+  display: block;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menu-toggle {
+  background: #3498db;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px 10px;
+  display: block;
+  margin: 5px 0;
+  cursor: pointer;
+}
+.menu-toggle : hover{
+  opacity: 0.8;
+}
+.menu-actions {
+  display: none; /* Sembunyiin awal */
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.menu-actions button {
+  width: 100%;
+  text-align: center;
+  padding: 8px;
+}
+.menu-label {
+  font-size: 16px;
+  margin-left: 8px;
+}
+/* Animasi untuk menu-actions */
+.menu-actions {
+  display: none;
+  opacity: 0;
+  transform: translateY(-10px); /* Start sedikit ke atas */
+  transition: 
+    opacity 0.1s ease-out,
+    transform 0.1s ease-out;
+}
+
+.menu-actions.show {
+  display: flex; /* Munculin */
+  opacity: 1; /* Full visible */
+  transform: translateY(0); /* Turun ke posisi normal */
+}
+  </style>
+</head>
+<body> 
+<div class="container">
+    <h2>Kalkulator Warung AL - Sakho 💸</h2>
+    <button id="btnBukaChart" class="btn-chart">📈 Lihat Statistik</button>
+    <label for="search">🔍 Cari Nama Barang:</label>
+    <input type="text" id="search" oninput="searchItem()" placeholder="Misal: le mineral 600ml">
+  
+    <div id="results"></div>
+    <!-- Tambah di bawah input search -->
+    <div class="scanner-section" id="scanner-container" style="display: none;">
+      <div id="qr-reader" style="width: 100%;"></div>
+      <button onclick="stopScanner()" class="btn-danger">❌ Stop Scanner</button>
+    </div>
+    
+    <button onclick="toggleScanner()" class="btn-scanner"> 📷 Barcode Scanner (Scan/tutup)</button>
+  
+    <div class="keranjang">
+      <h3>🛒 Isi Keranjang:</h3>
+      <div id="keranjangTabel"></div>
+    </div>
+  
+    <div class="total">
+      <p>Total Harga: <span id="totalHarga">Rp0</span></p>
+      <label for="uangDibayar">Uang Dibayar:</label>
+      <input type="text" id="uangDibayar" placeholder="Masukkan nominal uang..." oninput="formatUangMasuk(this); hitungKembalian()">
+      <p>Kembalian: <span id="kembalian">Rp0</span></p>
+    </div>
+      <div class="input-barang">
+        <h3>➕ Tambah Barang Baru</h3>
+        <input type="text" id="namaBarang" placeholder="Nama Barang (Contoh: Indomie Goreng)">
+        <input type="text" id="hargaBarang" placeholder="Harga (Contoh: 3.500)" 
+       oninput="formatRupiah(this)">
+        <input type="number" id="stokBarang" placeholder="Stok Awal (Contoh: 10)" min="0">
+        <button onclick="tambahBarangBaru()">⬇️ Simpan Barang</button>
+        <div class="tambah-stok">
+          <h3>📦 Update Stok Barang</h3>
+          <div class="searchable-dropdown">
+            <input 
+              type="text" 
+              id="cariBarang" 
+              placeholder="🔍 Ketik nama barang..." 
+              list="daftarBarang"
+              oninput="filterBarang()"
+            >
+            <datalist id="daftarBarang">
+              <!-- Options akan diisi oleh JavaScript -->
+            </datalist>
+          </div>
+          <input type="number" id="jumlahTambahStok" placeholder="Jumlah Tambah Stok" min="1">
+          <button onclick="tambahStokBarang()">Update Stok</button>
+        </div>
+      </div>
+            <div class="update-harga">
+        <h3>🔄 Update Harga Barang</h3>
+        <div class="searchable-dropdown">
+          <input 
+            type="text" 
+            id="cariBarangHarga" 
+            placeholder="🔍 Ketik nama barang..." 
+            list="daftarBarangHarga"
+            oninput="filterBarangHarga()"
+          >
+          <datalist id="daftarBarangHarga">
+            <!-- Options akan diisi oleh JavaScript -->
+          </datalist>
+        </div>
+        <input type="text" id="hargaBaru" placeholder="Harga Baru (Contoh: 3.500)" oninput="formatRupiah(this)">
+        <button onclick="updateHargaBarang()">Update Harga</button>
+      </div>
+      <!-- Taruh di bagian bawah sebelum </div> container -->
+      <div class="tambah-barcode">
+        <h3>🔖 Tambah Barcode ke Barang</h3>
+        
+        <!-- Input Pencarian Barang (Bisa Ketik Manual) -->
+        <input 
+          type="text" 
+          id="cariBarangBarcode" 
+          list="daftarBarangBarcode" 
+          placeholder="Ketik nama barang..."
+          oninput="filterBarangBarcode()"
+        >
+        <datalist id="daftarBarangBarcode">
+          <!-- Diisi otomatis oleh JavaScript -->
+        </datalist>
+        
+        <!-- Input Barcode Manual -->
+        <input 
+          type="text" 
+          id="inputBarcode" 
+          placeholder="Scan/Input Barcode (Contoh: 8998866101234)"
+          oninput="validasiAngka(this)"
+        >
+        
+        <button onclick="simpanBarcode()" class="btn-primary">💾 Simpan Barcode</button>
+        <p id="pesanBarcode"></p>
+      </div>
+      
+    <div class="riwayat">
+  <div class="menu-header">
+    <h3>🧾 Riwayat Belanja</h3>
+    
+    <button class="menu-toggle" onclick="toggleMenu()">⋮<span class="menu-label">Menu</span></button>
+  </div>
+  
+  <div class="menu-actions" id="menuActions">
+    <button onclick="exportRiwayatKeTXT()">📄 Export ke TXT</button>
+    <button onclick="resetRiwayat()">🗑️ Hapus Riwayat</button>
+    <button onclick="backupData()">💾 Backup ke JSON</button>
+    <button onclick="backupDataKeCSV()">📊 Backup ke CSV</button>
+    <button onclick="document.getElementById('restoreFile').click()">🔄 Restore JSON</button>
+    <input type="file" id="restoreFile" accept=".json" style="display: none;">
+  </div>
+  
+  <ul id="riwayatList"></ul>
+</div>
+          <div class="storage-info">
+        <p>💾 Kapasitas Penyimpanan Warung</p>
+        <div class="storage-bar">
+          <div class="used" id="storageUsed"></div>
+        </div>
+        <p id="storageText">3% terpakai (1.5 KB / 5 MB)</p>
+      </div>
+</div> 
+<!-- Di akhir body, sebelum </body> -->
+<div id="chartModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>📊 Statistik Warung</h2>
+    <div class="chart-tabs">
+      <button onclick="tampilkanChart('omset', event)">Omset</button>
+      <button onclick="tampilkanChart('produk-laris', event)">Produk Terlaris</button>
+      <button onclick="tampilkanChart('laba', event)">Laba</button>
+    </div>
+    <canvas id="warungChart"></canvas>
+  </div>
+</div>
+<script>
+  // Di awal script tambahkan:
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error("Global error:", { message, source, lineno, error });
+};
+  // Database Configuration
+const dbName = "WarungAlSakhoDB";
+const dbVersion = 3;
+
+// Object stores (tables)
+const stores = {
+  BARANG: "barang",
+  KERANJANG: "keranjang",
+  RIWAYAT: "riwayat"
+};
+
+let db;
+
+// Initialize database
+async function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName, dbVersion);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      
+      // Hapus dulu object store jika sudah ada (untuk development)
+      if (db.objectStoreNames.contains(stores.BARANG)) {
+        db.deleteObjectStore(stores.BARANG);
+      }
+      if (db.objectStoreNames.contains(stores.KERANJANG)) {
+        db.deleteObjectStore(stores.KERANJANG);
+      }
+       if (db.objectStoreNames.contains(stores.RIWAYAT)) {
+        db.deleteObjectStore(stores.RIWAYAT);
+      }
+      // Buat ulang store dengan struktur baru
+      const barangStore = db.createObjectStore(stores.BARANG, { keyPath: "nama" });
+      barangStore.createIndex("by_nama", "nama", { unique: true });
+      barangStore.createIndex("by_barcode", "barcode", { unique: false });
+      
+      db.createObjectStore(stores.KERANJANG, { keyPath: "nama" });
+      db.createObjectStore(stores.RIWAYAT, { autoIncrement: true });
+      const riwayatStore = db.createObjectStore(stores.RIWAYAT, { autoIncrement: true });
+      riwayatStore.createIndex("by_timestamp_nama", ["timestamp", "nama"], { unique: false });
+    };
+
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      
+      // Tambahkan error handling untuk transaction
+      db.onerror = (event) => {
+        console.error("Database error:", event.target.error);
+      };
+      
+      resolve(db);
+    };
+
+    request.onerror = (event) => {
+      console.error("Database open error:", event.target.error);
+      reject(new Error("Gagal buka database. Coba refresh halaman."));
+    };
+  });
+}
+
+// Helper function for database operations
+function dbOperation(storeName, mode, operation) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, mode);
+    const store = transaction.objectStore(storeName);
+    
+    const request = operation(store);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Initialize the application
+async function initializeApp() {
+  try {
+    await initDB();
+    
+    // Check if barang data exists, if not, initialize with default data
+    const count = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.count();
+    });
+    
+    if (count === 0) {
+      await initializeBarangData();
+    }
+    // [PERUBAHAN UTAMA] Bersihkan keranjang saat reload
+    await dbOperation(stores.KERANJANG, "readwrite", (store) => {
+      return store.clear();
+    });
+    // Load UI
+    loadUI();
+    updateStorageInfo();
+    tampilkanChart('omset')
+  } catch (error) {
+    console.error("Initialization error:", error);
+    alert("Gagal memuat aplikasi. Silakan refresh halaman.");
+  }
+}
+
+// Initialize barang data with default stock (30)
+async function initializeBarangData() {
+  // NOTE: In practice, you would load your 500+ items array here
+  // For this example, I'll show how to insert one item - you would loop through your array
+  
+  // Example structure for your barang data:
+  const defaultBarangData = [
+    { nama: "ABC SAMBEL TERASI", harga: 1500},
+    { nama: "ABC SAMBEL XTRA PEDAS", harga: 1500},
+    { nama: "ADEM SARI CINGKU", harga: 7500 },
+    { nama: "ADEM SARI TANPA ES", harga: 2500 },
+    { nama: "AKOS AGER", harga: 5000 },
+    { nama: "AMH JAHE SUSU", harga: 1500 },
+    { nama: "AMOXILIN", harga: 1000 },
+    { nama: "AMPLOP", harga: 500 },
+    { nama: "ANGET SARI SUSU JAHE", harga: 1500 },
+    { nama: "ANLENE SUSU", harga: 3000 },
+    { nama: "ANTAKA", harga: 5500 },
+    { nama: "ANTANGIN", harga: 4000 },
+    { nama: "ANTIMO ANAK", harga: 2500 },
+    { nama: "ANTIMO TABLET", harga: 750 },
+    { nama: "AQUA 1,5L", harga: 6000 },
+    { nama: "AQUA 1,5L DINGIN", harga: 6500 },
+    { nama: "AQUA 600", harga: 3000 },
+    { nama: "AQUA 600ML DINGIN", harga: 3500 },
+    { nama: "AUTAN", harga: 500 },
+    { nama: "BATERE JAM", harga: 3000 },
+    { nama: "BATERE REMOTE CILIK ISI 2", harga: 6000 },
+    { nama: "BAWANG PUTIH BUBUK DK", harga: 500 },
+    { nama: "BEDAK CUSSON 100GR", harga: 7000 },
+    { nama: "BEDAK SALICYL", harga: 8500 },
+    { nama: "BENG BENG", harga: 2500 },
+    { nama: "BETADINE", harga: 7000 },
+    { nama: "BETTER", harga: 1000 },
+    { nama: "BIHUN JAGUNG", harga: 4000 },
+    { nama: "BINTANG 7", harga: 1000 },
+    { nama: "BIOSOL", harga: 500 },
+    { nama: "BLUEBAND RENTENG", harga: 2500 },
+    { nama: "BODREX", harga: 500 },
+    { nama: "BODREX MIGRA", harga: 1000 },
+    { nama: "BODREX XTRA", harga: 1000 },
+    { nama: "BODREXIN", harga: 500 },
+    { nama: "BONCABE", harga: 1000 },
+    { nama: "BUKU GAMBAR", harga: 3500 },
+    { nama: "BUKU TULIS", harga: 4500 },
+    { nama: "BUKU TULIS 58 LMBR", harga: 5500 },
+    { nama: "BUMBU RACIK", harga: 2000 },
+    { nama: "BYE BYE FEVER", harga: 11000 },
+    { nama: "CERELAC", harga: 2000 },
+    { nama: "CHARM 23 CM ISI 2+1", harga: 3000 },
+    { nama: "CHARM 23 EXTRA MAXI ISI 2", harga: 2500 },
+    { nama: "CHARM 29 CM ISI 2", harga: 3000 },
+    { nama: "CHARM 35 ISI 2", harga: 3000 },
+    { nama: "CHITATO", harga: 2000 },
+    { nama: "CHITATO LITE", harga: 2000 },
+    { nama: "CHOCOLATOS DRINK + ES", harga: 3500 },
+    { nama: "CHOCOLATOS ROLLS", harga: 500 },
+    { nama: "CHOCOPAI", harga: 2000 },
+    { nama: "CHOKI STICK", harga: 2000 },
+    { nama: "CIKI 2000", harga: 2000 },
+    { nama: "CIKI GUNTUR", harga: 1000 },
+    { nama: "CITRUN", harga: 3000 },
+    { nama: "COCA COLA SERU", harga: 5500 },
+    { nama: "COKI COKI", harga: 1000 },
+    { nama: "CONTREXIN", harga: 500 },
+    { nama: "CUSSONS BABY BEDAK", harga: 6500 },
+    { nama: "DANCOW SUSU", harga: 4500 },
+    { nama: "DESAKU BUMBU BALADO", harga: 2500 },
+    { nama: "DESAKU KETUMBAR BUBUK", harga: 1000 },
+    { nama: "DESAKU KUNYIT BUBUK", harga: 1000 },
+    { nama: "DESAKU MARINASI", harga: 1000 },
+    { nama: "DIAPET", harga: 1000 },
+    { nama: "DOWNY ALURE", harga: 500 },
+    { nama: "DOWNY FLORAL PINK", harga: 500 },
+    { nama: "DOWNY SUNRISE FRESH", harga: 500 },
+    { nama: "EKONOMI POWER LIQUID", harga: 2500 },
+    { nama: "EKONOMI SABUN COLET", harga: 1000 },
+    { nama: "ENERGEN COKLAT", harga: 2500 },
+    { nama: "ENERGEN SUSU", harga: 2500 },
+    { nama: "ENTROSTOP", harga: 2000 },
+    { nama: "ENTROSTOP ANAK", harga: 3500 },
+    { nama: "EXTRAJOSS + ES", harga: 3000 },
+    { nama: "FAIR & LOVLI PELEMBAB", harga: 4500 },
+    { nama: "FAIR & LOVLI FASIAL FOAM", harga: 3500 },
+    { nama: "FANTA/COCA COLA DINGIN", harga: 5500 },
+    { nama: "FATIGON SPIRIT", harga: 2500 },
+    { nama: "FLORIDINA", harga: 4000 },
+    { nama: "FRENTA", harga: 1000 },
+    { nama: "GARAM HIU", harga: 1500 },
+    { nama: "GARAM KAPAL 1/4", harga: 3000 },
+    { nama: "GARUDA O'CORN", harga: 2000 },
+    { nama: "GARUDA ROSTA", harga: 1000 },
+    { nama: "GELAS PLASTIK 1PAK", harga: 7000 },
+    { nama: "GELIGA GEDE 20GR", harga: 11000 },
+    { nama: "GELIGA KECIL 10GR", harga: 6000 },
+    { nama: "GERY MESES", harga: 500 },
+    { nama: "GERY SNACK SEREAL", harga: 1000 },
+    { nama: "GILET BLUE", harga: 10000 },
+    { nama: "GILETE", harga: 6000 },
+    { nama: "GILETE GOAL", harga: 4000 },
+    { nama: "GIV SABUN CAIR", harga: 3500 },
+    { nama: "GO POTATO", harga: 500 },
+    { nama: "GOOD DAY FREEZE TANPA ES", harga: 3000 },
+    { nama: "GOOD TIME DOBLE COCO", harga: 1000 },
+    { nama: "GPU 30 ML", harga: 11000 },
+    { nama: "GPU GEDE 60ML", harga: 17500 },
+    { nama: "GULA BATU 1/4 TAWON", harga: 5500 },
+    { nama: "GULA PASIR 1/4", harga: 5000 },
+    { nama: "GULA PASIR RENTENG", harga: 1000 },
+    { nama: "GULA TEPUNG", harga: 6000 },
+    { nama: "GULA WATU LAWA 1/4", harga: 5000 },
+    { nama: "HANGER", harga: 12000 },
+    { nama: "HANSAPLAST", harga: 500 },
+    { nama: "HELO PANDA", harga: 1000 },
+    { nama: "HERS PROTEX", harga: 500 },
+    { nama: "HIT MAGIC", harga: 1000 },
+    { nama: "HIT PIRAMIDA", harga: 2500 },
+    { nama: "INSTO TETES MATA", harga: 14000 },
+    { nama: "JAPOTA", harga: 2000 },
+    { nama: "JASJUS APEL", harga: 1000 },
+    { nama: "JASJUS STRO", harga: 1000 },
+    { nama: "JAZ1", harga: 1000 },
+    { nama: "JELLVIT", harga: 2000 },
+    { nama: "JETZ", harga: 1000 },
+    { nama: "JOYKO PENGHAPUS BSR", harga: 2000 },
+    { nama: "JOYKO PENGHAPUS KCL", harga: 1000 },
+    { nama: "KACANG KELINCI", harga: 1000 },
+    { nama: "KACANG KORO", harga: 1000 },
+    { nama: "KALPA", harga: 2000 },
+    { nama: "KAPAS KHARISMA", harga: 6000 },
+    { nama: "KAPAS SELECTION", harga: 7000 },
+    { nama: "KAPUR AJAIB", harga: 3500 },
+    { nama: "KARBOL", harga: 11000 },
+    { nama: "KARBOL SWAN", harga: 12000 },
+    { nama: "KARET GELANG", harga: 2500 },
+    { nama: "KARMELLOW POPCORN", harga: 1000 },
+    { nama: "KECAP BANGO 2000", harga: 2000 },
+    { nama: "KECAP BANGO REFILL", harga: 3000 },
+    { nama: "KECAP BANGO SACHET", harga: 1000 },
+    { nama: "KECAP SEDAP 2000 REFILL", harga: 2500 },
+    { nama: "KECAP SEDAP SACHET", harga: 500 },
+    { nama: "KEMIRI", harga: 500 },
+    { nama: "KEMIRI 18 GRAM", harga: 2000 },
+    { nama: "KEMIRI 9 GRAM", harga: 1000 },
+    { nama: "KERTAS KADO", harga: 1500 },
+    { nama: "KERTAS MINYAK", harga: 2500 },
+    { nama: "KERTAS PUTIH 1/2 KG", harga: 4500 },
+    { nama: "KISPRAY AMORIS", harga: 500 },
+    { nama: "KISPRAY FINE PARFUME GOLD", harga: 1000 },
+    { nama: "KIT SAMPO", harga: 1000 },
+    { nama: "KODOMO BEDAK", harga: 4500 },
+    { nama: "KODOMO SAMPO CILIK", harga: 3500 },
+    { nama: "KODOMO SAMPO GEDE", harga: 8000 },
+    { nama: "KOMIK HERBAL BOTOL", harga: 3500 },
+    { nama: "KOMIK HERBAL SASET", harga: 3000 },
+    { nama: "KOMIK KID", harga: 1500 },
+    { nama: "KOMIK OBH", harga: 2000 },
+    { nama: "KOMIK OBH ANAK", harga: 1500 },
+    { nama: "KONIDIN", harga: 1000 },
+    { nama: "KOOLFEVER BIRU", harga: 8000 },
+    { nama: "KOOLFEVER PINK", harga: 7500 },
+    { nama: "KOPI ABC AREN", harga: 1500 },
+    { nama: "KOPI ABC KOPI SUSU", harga: 2000 },
+    { nama: "KOPI GAJAH", harga: 1500 },
+    { nama: "KOPI GOOD DAY CAPUCHINO", harga: 2000 },
+    { nama: "KOPI GOOD DAY MOCACINNO", harga: 2000 },
+    { nama: "KOPI INDOCAFE COFFEEMIX", harga: 2000 },
+    { nama: "KOPI KAPAL API", harga: 2000 },
+    { nama: "KOPI PIKOPI", harga: 1500 },
+    { nama: "KOPI TARIK MALAKA", harga: 2000 },
+    { nama: "KOPI TORABIKA CREAMELATE", harga: 2000 },
+    { nama: "KOREK GAS", harga: 2500 },
+    { nama: "KOYO CABE", harga: 1500 },
+    { nama: "KRATINGDENG", harga: 5000 },
+    { nama: "KUKU BIMA ES", harga: 3000 },
+    { nama: "KUNYIT BUBUK", harga: 1000 },
+    { nama: "LADAKU", harga: 1000 },
+    { nama: "LAKBAN HITAM", harga: 1500 },
+    { nama: "LAMPU ENDORA 5 WATT", harga: 7000 },
+    { nama: "LAMPU LED 10 W", harga: 10000 },
+    { nama: "LAMPU LED 5 W", harga: 8000 },
+    { nama: "LAP PEL NAGOYA", harga: 17500 },
+    { nama: "LARUTAN BOTOL BESAR", harga: 8000 },
+    { nama: "LARUTAN BOTOL KECIL", harga: 4000 },
+    { nama: "LARUTAN BTL ANAK", harga: 4000 },
+    { nama: "LARUTAN KALENG", harga: 7000 },
+    { nama: "LARUTAN KALENG ANAK", harga: 6500 },
+    { nama: "LAURIER 3 CM ISI 2", harga: 3000 },
+    { nama: "LAURIER 30 CM", harga: 1500 },
+    { nama: "LE MINERAL 600ML DINGIN", harga: 3500 },
+    { nama: "LE MINERAL 600ML", harga: 3000 },
+    { nama: "LEMONIA", harga: 1000 },
+    { nama: "LILIN CILIK", harga: 1000 },
+    { nama: "LILIN JUMBO", harga: 2000 },
+    { nama: "LUWAK WHITE COFFEE", harga: 1500 },
+    { nama: "MADURASA", harga: 1500 },
+    { nama: "MAMA LEMON 2000", harga: 2500 },
+    { nama: "MAMA LEMON 4000", harga: 4500 },
+    { nama: "MARGARIN FITRI", harga: 7500 },
+    { nama: "PALMIA MARGARIN", harga: 7500 },
+    { nama: "MARGARIN ROSE BRAND", harga: 7500 },
+    { nama: "MARIMAS MANGGA", harga: 1000 },
+    { nama: "MARINA HANDBODY", harga: 5500 },
+    { nama: "MARINA HANDBODY GEDE", harga: 10000 },
+    { nama: "MASAKO AYAM", harga: 500 },
+    { nama: "MAXTEA TEH TARIK + ES", harga: 4000 },
+    { nama: "MAXTRIL", harga: 1000 },
+    { nama: "MECIN 2000", harga: 2500 },
+    { nama: "MECIN 5000", harga: 5500 },
+    { nama: "MECIN RENTENG", harga: 750 },
+    { nama: "MERRIES M", harga: 2500 },
+    { nama: "MERRIES XL", harga: 3000 },
+    { nama: "MI KENDURI", harga: 13000 },
+    { nama: "MIE GELAS", harga: 1500 },
+    { nama: "MIE GEMEZ ENAAK", harga: 1000 },
+    { nama: "MIE INDOMIE RENDANG", harga: 3500 },
+    { nama: "MIE INDOMIE ACEH", harga: 3500 },
+    { nama: "MIE INDOMIE GORENG", harga: 3500 },
+    { nama: "MIE INDOMIE REBUS", harga: 3500 },
+    { nama: "MIE SAKURA", harga: 2500 },
+    { nama: "MIE SEDAP BASO", harga: 3500 },
+    { nama: "MIE SEDAP GORENG", harga: 3500 },
+    { nama: "MIE SEDAP REBUS", harga: 3000 },
+    { nama: "MIE SEDAP SELECTION KOREA", harga: 3500 },
+    { nama: "MIE SEDAP SINGAPUR", harga: 3500 },
+    { nama: "MIE SEDAP SOTO", harga: 3500 },
+    { nama: "MIE SUKSES ISI 2", harga: 4500 },
+    { nama: "MILKITA COKLAT/VANILLA", harga: 500 },
+    { nama: "MILKU ALL", harga: 3500 },
+    { nama: "MILO COKLAT + ES", harga: 3500 },
+    { nama: "MINYAK GORENG 1/2", harga: 10000 },
+    { nama: "MINYAK GORENG 1/4", harga: 5000 },
+    { nama: "MINYAK GORENG SACHET", harga: 1000 },
+    { nama: "MINYAK GOSOK URUT", harga: 12000 },
+    { nama: "MINYAK KAYU PUTIH BSR", harga: 12000 },
+    { nama: "MINYAK KAYU PUTIH KCL", harga: 6500 },
+    { nama: "MISTER CUKUR", harga: 8000 },
+    { nama: "MITU BABY TISU BASAH", harga: 1500 },
+    { nama: "MOLTO EDP", harga: 500 },
+    { nama: "NABATI SIIP", harga: 500 },
+    { nama: "NABATI TIMEBREAK", harga: 1000 },
+    { nama: "NABATI WAFER", harga: 2000 },
+    { nama: "NEOREMACIL", harga: 750 },
+    { nama: "NEOZEPFORTE", harga: 1250 },
+    { nama: "NEXTAR", harga: 2000 },
+    { nama: "NUTRIJELL", harga: 2500 },
+    { nama: "NUTRISARI ALL", harga: 2500 },
+    { nama: "NYAM NYAM", harga: 2000 },
+    { nama: "OBAT LAMUK BAYGON", harga: 6000 },
+    { nama: "OBAT LAMUK KINGKONG 2000/perpasang", harga: 7000 },
+    { nama: "OBAT LAMUK VAPE 1500/perpasang", harga: 5500 },
+    { nama: "OBAT SAKIT GIGI", harga: 2500 },
+    { nama: "ODOL CIPTADENT 75GR", harga: 4500 },
+    { nama: "ODOL CLOSE UP 160GR", harga: 18000 },
+    { nama: "ODOL CLOSE UP 75 GR", harga: 8500 },
+    { nama: "ODOL KODOMO + SIKAT", harga: 10000 },
+    { nama: "ODOL KODOMO 45GR", harga: 7000 },
+    { nama: "OISHI KARAMEL POPCORN", harga: 2000 },
+    { nama: "OPAN", harga: 5000 },
+    { nama: "OSKADON", harga: 1000 },
+    { nama: "PALA BUBUK", harga: 500 },
+    { nama: "PANADOL EXTRA", harga: 1500 },
+    { nama: "PANTENE KONDISIONER", harga: 500 },
+    { nama: "PARAMEX", harga: 1000 },
+    { nama: "PARAMEX NYERI OTOT", harga: 1000 },
+    { nama: "PEMBATAS BUKU", harga: 1000 },
+    { nama: "PENGGARIS BUTERFLY 20CM", harga: 2500 },
+    { nama: "PENGGARIS CILIK", harga: 1000 },
+    { nama: "PENGGARIS DOBEL", harga: 3000 },
+    { nama: "PENGGARIS GEDE", harga: 3000 },
+    { nama: "PENSIL 2B", harga: 2000 },
+    { nama: "PENSIL 2B JOYKO", harga: 2500 },
+    { nama: "PENSIL GAMBAR JOYKO", harga: 13000 },
+    { nama: "PENSIL WARNA KECIL", harga: 9000 },
+    { nama: "PEPSODEN BSR", harga: 13500 },
+    { nama: "PEPSODEN KCL", harga: 5500 },
+    { nama: "PERETAN", harga: 1000 },
+    { nama: "PERETAN GEDE", harga: 1500 },
+    { nama: "PERMEN BIG BABOL", harga: 500 },
+    { nama: "PERMEN HOTHOTPOP", harga: 500 },
+    { nama: "PERMEN KISS", harga: 1000 },
+    { nama: "PERMEN KOPIKO", harga: 1000 },
+    { nama: "PERMEN MENTOS", harga: 1000 },
+    { nama: "PIKOK HI TOP", harga: 13000 },
+    { nama: "PLASTIK CAMAR", harga: 8500 },
+    { nama: "PLASTIK CERY NO 11", harga: 9000 },
+    { nama: "PLASTIK ES 11 ALFA", harga: 10000 },
+    { nama: "PLASTIK ES 12 ALFA", harga: 10000 },
+    { nama: "PLASTIK ES 13 ALFA", harga: 10000 },
+    { nama: "PLASTIK ES 15 ALFA/AQUA", harga: 10000 },
+    { nama: "PLASTIK KRESEK IRENG TOYA", harga: 2500 },
+    { nama: "PLASTIK KRESEK MAHKOTA", harga: 2000 },
+    { nama: "PLASTIK MIKI 12", harga: 9000 },
+    { nama: "PLASTIK MIKI 13", harga: 9000 },
+    { nama: "PLASTIK MIKI 15", harga: 9000 },
+    { nama: "PLASTIK NAGA 12", harga: 18000 },
+    { nama: "PLASTIK SMILE CILIK", harga: 7500 },
+    { nama: "POCARI SWEAT 350", harga: 6000 },
+    { nama: "POLITEX SABUT STAINLES", harga: 3000 },
+    { nama: "POP ICE ALL PLUS ES", harga: 2500 },
+    { nama: "POP ICE CHOCOLATOS", harga: 2500 },
+    { nama: "POP MIE BSR", harga: 5500 },
+    { nama: "POP MIE KCL", harga: 4000 },
+    { nama: "POTABEE", harga: 2000 },
+    { nama: "PRIMA BOTOL MINUM", harga: 3000 },
+    { nama: "PROCLIN", harga: 500 },
+    { nama: "PROCOLD FLU", harga: 1000 },
+    { nama: "PROMAG", harga: 1000 },
+    { nama: "PROMAG GAZERO", harga: 3000 },
+    { nama: "PROMINA", harga: 2000 },
+    { nama: "PULPEN BLERENG", harga: 1000 },
+    { nama: "PULPEN BOXI", harga: 2000 },
+    { nama: "PULPEN GEL", harga: 2000 },
+    { nama: "PULPEN IRENG", harga: 1500 },
+    { nama: "PULPEN KARAKTER GEL", harga: 2500 },
+    { nama: "QUEEN BISCUIT", harga: 500 },
+    { nama: "RACIK", harga: 2000 },
+    { nama: "REXONA MEN DEO LOTION", harga: 3000 },
+    { nama: "REXONA WADON", harga: 3000 },
+    { nama: "RINSO BUBUK MOLTO", harga: 1000 },
+    { nama: "RINSO CAIR MOLTO", harga: 1000 },
+    { nama: "ROKOK 303 ISI 20", harga: 14000 },
+    { nama: "ROKOK 9 DAUN", harga: 10000 },
+    { nama: "ROKOK ARMOR", harga: 8500 },
+    { nama: "ROKOK BIGNUM", harga: 17000 },
+    { nama: "ROKOK COKLAT ELITE", harga: 18000 },
+    { nama: "ROKOK COKLAT EXTRA", harga: 16500 },
+    { nama: "ROKOK CVH", harga: 12000 },
+    { nama: "ROKOK DJAJA", harga: 16000 },
+    { nama: "ROKOK DJINGGO TEA", harga: 12000 },
+    { nama: "ROKOK DUNHILL", harga: 28000 },
+    { nama: "ROKOK DUNHILL BESAR", harga: 30500 },
+    { nama: "ROKOK ESPRESO", harga: 18500 },
+    { nama: "ROKOK JARUM SUPER ESPRESO GOLD", harga: 20000 },
+    { nama: "ROKOK JARUM COKLAT EXTRA MOCCA", harga: 18000 },
+    { nama: "ROKOK FILTER", harga: 27000 },
+    { nama: "ROKOK GG MERAH", harga: 17000 },
+    { nama: "ROKOK GUDMER", harga: 17000 },
+    { nama: "ROKOK GUDMER 16", harga: 19500 },
+    { nama: "ROKOK HARUM MANIS", harga: 13500 },
+    { nama: "ROKOK JARUM COKLAT", harga: 17500 },
+    { nama: "ROKOK JATI COKLAT", harga: 10000 },
+    { nama: "ROKOK JATI REFILL 12", harga: 12000 },
+    { nama: "ROKOK JATI REFILL 16", harga: 14000 },
+    { nama: "ROKOK JUARA", harga: 14500 },
+    { nama: "ROKOK KING", harga: 23500 },
+    { nama: "ROKOK KRISTAL", harga: 16500 },
+    { nama: "ROKOK LA ICE", harga: 36000 },
+    { nama: "ROKOK MAGNUM BINTANG", harga: 26000 },
+    { nama: "ROKOK MAGNUM FILTER", harga: 27000 },
+    { nama: "ROKOK MARBORO KRETEK ABG", harga: 11000 },
+    { nama: "ROKOK MAYANG", harga: 11000 },
+    { nama: "ROKOK NESLITE 12", harga: 17000 },
+    { nama: "ROKOK NESLITE 20", harga: 25000 },
+    { nama: "ROKOK RAME", harga: 10000 },
+    { nama: "ROKOK SAAT BIRU", harga: 25000 },
+    { nama: "ROKOK SAAT PUTIH", harga: 26000 },
+    { nama: "ROKOK SAMPURNA KRETEK", harga: 16500 },
+    { nama: "ROKOK SAMPURNA MILD", harga: 37000 },
+    { nama: "ROKOK SAMPURNA MILD 12", harga: 27000 },
+    { nama: "ROKOK SAMSU", harga: 21000 },
+    { nama: "ROKOK SAMSU REFILL", harga: 23000 },
+    { nama: "ROKOK SAYAP MAS", harga: 12000 },
+    { nama: "ROKOK SAMPURNA PRIMA", harga: 16500 },
+    { nama: "ROKOK SIGNATURE", harga: 26000 },
+    { nama: "ROKOK SIGNATURE KRETEK", harga: 18000 },
+    { nama: "ROKOK SOBER", harga: 9000 },
+    { nama: "ROKOK SRIWEDARI", harga: 13000 },
+    { nama: "ROKOK JARUM SUPER", harga: 25000 },
+    { nama: "ROKOK SURYA 12", harga: 27000 },
+    { nama: "ROKOK SURYA 16", harga: 36000 },
+    { nama: "ROMA KOPYOR", harga: 8000 },
+    { nama: "ROMA MALKIST", harga: 1000 },
+    { nama: "ROMA MALKIST ABON", harga: 1000 },
+    { nama: "ROTI AOKA ALL", harga: 2500 },
+    { nama: "ROYALE SOKLIN", harga: 500 },
+    { nama: "ROYCO AYAM & SEDAP", harga: 500 },
+    { nama: "ROYCO AYAM 220 GR", harga: 10000 },
+    { nama: "ROYCO GEDE", harga: 5000 },
+    { nama: "SABUN CUSSON", harga: 5500 },
+    { nama: "SABUN DETTOL", harga: 4500 },
+    { nama: "SABUN EKONOMI COLET 67 GR", harga: 1250 },
+    { nama: "SABUN GIV BALOK", harga: 3500 },
+    { nama: "SABUN GIV CAIR", harga: 3500 },
+    { nama: "SABUN HARMONI", harga: 3000 },
+    { nama: "SABUN LIFBOY", harga: 4500 },
+    { nama: "SABUN SHINZUI", harga: 5000 },
+    { nama: "SABUN ZEN", harga: 4000 },
+    { nama: "SALONPAS", harga: 1000 },
+    { nama: "SALONPAS ITEM", harga: 2500 },
+    { nama: "SALONPAS SACHET", harga: 2000 },
+    { nama: "SAMBEL TRASI ULEG", harga: 1500 },
+    { nama: "SAMPO CLEAR", harga: 1000 },
+    { nama: "SAMPO HEAD N SOLDER", harga: 1000 },
+    { nama: "SAMPO KODOMO GEDE", harga: 10000 },
+    { nama: "SAMPO LIFBOUY 2", harga: 500 },
+    { nama: "SAMPO PANTENE", harga: 1000 },
+    { nama: "SAMPO REJOICE", harga: 1000 },
+    { nama: "SAMPO ZINC 2", harga: 500 },
+    { nama: "SAMPO ZINC COOL", harga: 500 },
+    { nama: "SANTAN BUBUK DAPUR KITA", harga: 1500 },
+    { nama: "SANTAN KARA", harga: 6000 },
+    { nama: "SAORI SAOS TIRAM", harga: 2500 },
+    { nama: "SAOS SURBRAJA", harga: 4000 },
+    { nama: "SAPU LANTAI", harga: 12500 },
+    { nama: "SAPU LIDI", harga: 5000 },
+    { nama: "SARI GANDUM SANWICH", harga: 2000 },
+    { nama: "SARIDON", harga: 1000 },
+    { nama: "SARIWANGI SACHET", harga: 1000 },
+    { nama: "SASA BUMBU", harga: 3000 },
+    { nama: "SASA SANTAN BUBUK", harga: 2500 },
+    { nama: "SASA TEPUNG  75", harga: 3000 },
+    { nama: "SAYANG LIQUID", harga: 1000 },
+    { nama: "SCRUBBER", harga: 3000 },
+    { nama: "SEDOTAN ALFA", harga: 7500 },
+    { nama: "SEDOTAN MELON", harga: 4000 },
+    { nama: "SEDOTAN KIJANG", harga: 8000 },
+    { nama: "SEDOTAN MICKY", harga: 8500 },
+    { nama: "SEGAR SARI SUSU SODA+ES", harga: 2500 },
+    { nama: "SELOTIP", harga: 1000 },
+    { nama: "SETIP JOYKO", harga: 1000 },
+    { nama: "SETIP JOYKO PANJANG", harga: 2000 },
+    { nama: "SIKAT GIGI FORMULA", harga: 4000 },
+    { nama: "LEM SUPER GLUE", harga: 2500 },
+    { nama: "SILET TIGER", harga: 1000 },
+    { nama: "SIP BITESIZE", harga: 2000 },
+    { nama: "SISRI", harga: 1000 },
+    { nama: "SKOTBRET SABUT KAWAT", harga: 4000 },
+    { nama: "SNACK BONCABE", harga: 2000 },
+    { nama: "SODIUM", harga: 1000 },
+    { nama: "SODIUM MIKI 47 GR", harga: 5500 },
+    { nama: "SOFEL APEL", harga: 500 },
+    { nama: "SOFEL JERUK", harga: 500 },
+    { nama: "SOFEL BENGKOANG", harga: 1000 },
+    { nama: "SOFTEX 23 ISI 2", harga: 2000 },
+    { nama: "SOFTEX 30 CM", harga: 3000 },
+    { nama: "SOFTEX DAUN SIRIH", harga: 750 },
+    { nama: "SOKLIN LANTAI", harga: 500 },
+    { nama: "SOKLIN LIQUID", harga: 500 },
+    { nama: "SOLASI ITEM", harga: 1500 },
+    { nama: "SOSIS KIMBO", harga: 1000 },
+    { nama: "SOSIS SONICE AYAM", harga: 1000 },
+    { nama: "SOSRI", harga: 1000 },
+    { nama: "SPIDOL HITAM", harga: 1500 },
+    { nama: "SPIDOL WARNA MONTANA", harga: 13000 },
+    { nama: "SPON CUCI PIRING", harga: 2000 },
+    { nama: "SPON SKOTBRET", harga: 4000 },
+    { nama: "STELLA PGHARUM RUANG", harga: 11000 },
+    { nama: "SUNLIGHT 100", harga: 1500 },
+    { nama: "SUNLIGHT 200", harga: 2500 },
+    { nama: "SUPER BUBUR", harga: 1000 },
+    { nama: "SUPERBOU CRUNCH", harga: 2000 },
+    { nama: "SUPERTETRA", harga: 2000 },
+    { nama: "SUS HUTTON", harga: 2000 },
+    { nama: "SUSU BENDERA KOTAK", harga: 3000 },
+    { nama: "SUSU BERUANG", harga: 11000 },
+    { nama: "SUSU COKLAT SACHET", harga: 2000 },
+    { nama: "SUSU GOLD SACHET", harga: 2500 },
+    { nama: "SUSU KOTAK", harga: 3000 },
+    { nama: "SUSU PUTIH SACHET", harga: 2000 },
+    { nama: "SUSU STERIL SOGOOD", harga: 8000 },
+    { nama: "SWEETY PANT M", harga: 2500 },
+    { nama: "SWEETY PANTS L", harga: 2500 },
+    { nama: "SWEETY PANTS S", harga: 2500 },
+    { nama: "SWEETY PANTS XL", harga: 3000 },
+    { nama: "TAIPINSAN", harga: 4000 },
+    { nama: "TARO", harga: 1000 },
+    { nama: "TEAJUS", harga: 1000 },
+    { nama: "TEH POCI", harga: 1000 },
+    { nama: "TEH PUCUK 350", harga: 3500 },
+    { nama: "TEH SISRI GULA BATU", harga: 1000 },
+    { nama: "TEH UPET", harga: 1000 },
+    { nama: "TELOR 1/4", harga: 8000 },
+    { nama: "TEPUNG CAMPU/TAPIOKA", harga: 5500 },
+    { nama: "TEPUNG ROSE BRAND 1/2 KG", harga: 9000 },
+    { nama: "TEPUNG TERIGU", harga: 5500 },
+    { nama: "TEH BOTOL SOSRO DINGIN", harga: 5500 },
+    { nama: "TEH CELUP TONG TJI", harga: 2000 },
+    { nama: "TICTIC", harga: 2000 },
+    { nama: "TIPE X JOYKO CILIK", harga: 3500 },
+    { nama: "TIPE X JOYKO EXTRA KECIL", harga: 2500 },
+    { nama: "TIP-EK JOYKO", harga: 5000 },
+    { nama: "TISU NICE", harga: 10000 },
+    { nama: "TISU TESSA", harga: 1500 },
+    { nama: "TISU TESSA SEDENG", harga: 2500 },
+    { nama: "TOLAK ANGIN", harga: 4000 },
+    { nama: "TOLAK LINU", harga: 3500 },
+    { nama: "TOLAKANGIN ANAK", harga: 3500 },
+    { nama: "TRASI ABC", harga: 5000 },
+    { nama: "UBARWARAS", harga: 2000 },
+    { nama: "ULTRAFLU", harga: 1000 },
+    { nama: "VANILI KUPUZ", harga: 1500 },
+    { nama: "VEGETA ALL", harga: 3500 },
+    { nama: "VIVA MILK CLEANSER", harga: 8500 },
+    { nama: "VIVA TONER", harga: 8000 },
+    { nama: "VIXAL", harga: 5000 },
+    { nama: "WAISAN", harga: 1000 },
+    { nama: "W'DANK BAJIGUR", harga: 2500 },
+    { nama: "WIPOL", harga: 1000 },
+    { nama: "ES BANYU PUTH", harga: 1000 },
+    { nama: "ES TEH JUS", harga: 1000 },
+    { nama: "ES NUTRISARI", harga: 3000 },
+    { nama: "BERAS IKG", harga: 14500 },
+    { nama: "MILKITA SUSU SACHET", harga: 7500 },
+    { nama: "YOU YOU STIK", harga: 1000 },
+    { nama: "KOREK GAS G2000", harga: 2000 },
+    { nama: "KOREK GAS TOKAI", harga: 2500 },
+    { nama: "BEDAK MBK", harga: 4000 },
+    { nama: "ROKOK SAYAP FILTER", harga: 17000 },
+    { nama: "PERMEN JAHE", harga: 5000 },
+    { nama: "HANSAPLAST KOYO PANAS", harga: 2000 },
+    { nama: "SELAIOLAI", harga: 2000 },
+    { nama: "ARDEN NEXTAR", harga: 2000 },
+    { nama: "TANGO", harga: 2000 },
+    { nama: "RUMPUT LAUT DAN CIKIAN", harga: 2000 },
+    { nama: "LOTTE TOPPO", harga: 2000 },
+    { nama: "GOOD DAY FREEZE + ES", harga: 4000 },
+    { nama: "GODAI", harga: 2000 },
+    { nama: "CHOKOLATOS PANJANG", harga: 2000 },
+    { nama: "CHOKOLATOS,GARRY", harga: 5000 },
+    { nama: "YUPY BIRU", harga: 7500 },
+    { nama: "SUPERSTAR PANJANG", harga: 1000 },
+    { nama: "SUPERSTAR SNAP", harga: 2000 },
+    { nama: "NABATI PANJANG", harga: 1000 },
+    { nama: "ASTOR,KIKO", harga: 1000 },
+    { nama: "JELLY", harga: 2000 },
+    { nama: "KOK CAP WANITA", harga: 5000 },
+    { nama: "GAS LPG", harga: 21000 },
+    { nama: "KERUPUK", harga: 2000 },
+    { nama: "ROKOK KETENG", harga: 2500 },
+    { nama: "ROKOK SUPER SETENGAH", harga: 13000 },
+    { nama: "ROKOK SETENGAH(selain super)", harga: 13500 },
+    { nama: "KUKU BIMA TANPA ES", harga: 2000 },
+    { nama: "KRIPIK", harga: 2000 },
+    { nama: "SNACK", harga: 2000 },
+    { nama: "PASTA,ROLLS", harga: 5000 },
+    { nama: "KEJU PROCIS", harga: 2500 },
+    { nama: "PLASTIK CAKRA HDPE", harga: 7500 },
+    { nama: "BENSIN", harga: 12000 },
+    { nama: "TEH SEPEDA BALAP", harga: 11000 },
+    { nama: "MAXTEA TEH TARIK TANPA ES", harga: 3000 },
+    { nama: "TOP GEDE", harga: 2000 },
+    { nama: "COTTON BUDS YO PIPI/bungkus", harga: 2000 },
+    { nama: "ROKOK MANGGA 76", harga: 17000 },
+    { nama: "ROKOK SENIOR 16", harga: 13000 },
+    { nama: "ENERGEN + ES", harga: 3500 }
+ ].map(item => ({ 
+  ...item, 
+  stok: 30,          // Default stok 30
+  barcode: ""        // Default barcode kosong
+}));
+  
+  // Bulk insert operation
+  await dbOperation(stores.BARANG, "readwrite", (store) => {
+    defaultBarangData.forEach(barang => {
+      store.put(barang);
+    });
+    return store.getAll(); // Just to return something
+  });
+}
+
+// UI Functions
+function loadUI() {
+  // Initialize UI elements and event listeners
+  document.getElementById('search').addEventListener('input', searchItem);
+  document.getElementById('uangDibayar').addEventListener('input', () => {
+    formatUangMasuk(document.getElementById('uangDibayar'));
+    hitungKembalian();
+  });
+  
+  // Load initial data
+  refreshKeranjang();
+  refreshRiwayat();
+  isiDropdownBarang();
+  isiDropdownBarangHarga();
+  isiDatalistBarcode();
+}
+
+// Search functionality
+async function searchItem() {
+  const keyword = document.getElementById('search').value.toLowerCase();
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.innerHTML = '<p>Mencari barang...</p>'; // Feedback loading
+  
+  if (!keyword.trim()) {
+    resultsDiv.innerHTML = '<p>Masukkan kata kunci pencarian</p>';
+    return;
+  }
+
+  try {
+    // 1. Pastikan database ready
+    if (!db) {
+      await initializeApp();
+    }
+
+    // 2. Gunakan dbOperation dengan error handling
+    const allItems = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.getAll();
+    }).catch(err => {
+      throw new Error(`Gagal mengambil data: ${err.message}`);
+    });
+
+    // 3. Filter dan tampilkan hasil
+    const hasil = allItems.filter(item => 
+      item.nama.toLowerCase().includes(keyword)
+    );
+
+    if (hasil.length === 0) {
+      resultsDiv.innerHTML = '<p>Tidak ada barang ditemukan.</p>';
+      return;
+    }
+
+    // 4. Build tabel hasil
+    let tableHTML = `
+      <table>
+        <tr>
+          <th>Nama Barang</th>
+          <th>Harga</th>
+          <th>Jumlah</th>
+          <th>Aksi</th>
+        </tr>
+    `;
+    
+    hasil.forEach(item => {
+      tableHTML += `
+        <tr>
+          <td>${escapeHTML(item.nama)} <small>(Stok: ${item.stok})</small></td>
+          <td>Rp${item.harga.toLocaleString('id-ID')}</td>
+          <td>
+            <input type="number" 
+                   id="jumlah-${escapeHTML(item.nama)}" 
+                   value="1" 
+                   min="1" 
+                   max="${item.stok}">
+          </td>
+          <td>
+            <button onclick="tambahKeKeranjang('${escapeHTML(item.nama)}')">
+              Tambah
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    
+    tableHTML += '</table>';
+    resultsDiv.innerHTML = tableHTML;
+
+  } catch (error) {
+    console.error("Search error:", error);
+    resultsDiv.innerHTML = `
+      <p class="error">Gagal mencari barang. 
+        <button onclick="searchItem()">Coba Lagi</button>
+      </p>
+    `;
+  }
+}
+
+// Helper untuk prevent XSS
+function escapeHTML(str) {
+  return str.replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+}
+
+// Cart functionality
+async function tambahKeKeranjang(namaBarang, fromBarcode = false) {
+  try {
+    const jumlah = parseInt(document.getElementById(`jumlah-${namaBarang}`).value) || 1;
+    
+    const item = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.get(namaBarang);
+    });
+    
+    if (!item) {
+      alert("Barang tidak ditemukan!");
+      return;
+    }
+    
+    if (item.stok < jumlah) {
+      alert(`❌ Stok ${item.nama} tidak cukup! Tersisa: ${item.stok}`);
+      return;
+    }
+    if (currentChart) tampilkanChart('omset');
+    // Update stock
+    await dbOperation(stores.BARANG, "readwrite", (store) => {
+      const updatedItem = { ...item, stok: item.stok - jumlah };
+      return store.put(updatedItem);
+    });
+    
+    // Update keranjang
+    const existingItem = await dbOperation(stores.KERANJANG, "readonly", (store) => {
+      return store.get(namaBarang);
+    });
+    
+    if (existingItem) {
+      await dbOperation(stores.KERANJANG, "readwrite", (store) => {
+        const updatedItem = { ...existingItem, jumlah: existingItem.jumlah + jumlah };
+        return store.put(updatedItem);
+      });
+    } else {
+      await dbOperation(stores.KERANJANG, "readwrite", (store) => {
+        return store.put({ ...item, jumlah });
+      });
+    }
+    
+    // Simpan riwayat dengan sistem baru
+    if (!fromBarcode) {
+      await simpanRiwayatTransaksi(item.nama, jumlah, item.harga);
+    }
+    
+    refreshKeranjang();
+    refreshRiwayat();
+    searchItem();
+    
+    alert(`✅ ${item.nama} ditambahkan ke keranjang!`);
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    alert("Gagal menambahkan ke keranjang.");
+  }
+}
+
+async function refreshKeranjang() {
+  const keranjangDiv = document.getElementById('keranjangTabel');
+  
+  try {
+    const items = await dbOperation(stores.KERANJANG, "readonly", (store) => {
+      return store.getAll();
+    });
+    
+    if (items.length === 0) {
+      keranjangDiv.innerHTML = '<p>Belum ada barang di keranjang.</p>';
+      return;
+    }
+
+    let html = `
+      <table>
+        <tr>
+          <th>Nama</th>
+          <th>Jumlah</th>
+          <th>Harga</th>
+          <th>Total</th>
+          <th>Aksi</th>
+        </tr>
+    `;
+    
+    let grandTotal = 0;
+    
+    items.forEach(item => {
+      const total = item.harga * item.jumlah;
+      grandTotal += total;
+      
+      html += `
+        <tr>
+          <td>${item.nama}</td>
+          <td>${item.jumlah}</td>
+          <td>Rp${item.harga.toLocaleString('id-ID')}</td>
+          <td>Rp${total.toLocaleString('id-ID')}</td>
+          <td><button onclick="hapusDariKeranjang('${item.nama}')">❌</button></td>
+        </tr>
+      `;
+    });
+    
+    html += '</table>';
+    keranjangDiv.innerHTML = html;
+    
+    // Update total
+    document.getElementById('totalHarga').innerText = 'Rp' + grandTotal.toLocaleString('id-ID');
+    hitungKembalian();
+  } catch (error) {
+    console.error("Error refreshing cart:", error);
+    keranjangDiv.innerHTML = '<p>Error memuat keranjang.</p>';
+  }
+}
+
+async function hapusDariKeranjang(namaBarang) {
+  try {
+    // 1. Hapus langsung dari keranjang TANPA kembalikan stok
+    await dbOperation(stores.KERANJANG, "readwrite", (store) => {
+      return store.delete(namaBarang);
+    });
+
+    // 2. Refresh tampilan
+    refreshKeranjang();
+    alert(`✅ ${namaBarang} dihapus dari keranjang!`);
+
+  } catch (error) {
+    console.error("Gagal menghapus dari keranjang:", error);
+    alert("❌ Gagal menghapus barang!");
+  }
+}
+
+// History functions
+async function simpanRiwayatTransaksi(namaBarang, jumlah, harga) {
+  try {
+    const timestamp = new Date().toISOString();
+    const idTransaksi = `${namaBarang}_${timestamp}`;
+    const catatan = `${namaBarang} x${jumlah} = Rp${(harga * jumlah).toLocaleString('id-ID')}`;
+    
+    await dbOperation(stores.RIWAYAT, "readwrite", (store) => {
+      // Gunakan put() dengan key yang unik daripada add()
+      return store.put({
+        id: idTransaksi,
+        nama: namaBarang,
+        jumlah: jumlah,
+        harga: harga,
+        timestamp: timestamp,
+        catatan: catatan
+      }, idTransaksi); // Gunakan idTransaksi sebagai key
+    });
+  } catch (error) {
+    console.error("Gagal menyimpan riwayat:", error);
+  }
+}
+async function refreshRiwayat() {
+  const ul = document.getElementById("riwayatList");
+  ul.innerHTML = "";
+  
+  try {
+    const allHistory = await dbOperation(stores.RIWAYAT, "readonly", (store) => {
+      return store.getAll();
+    });
+    
+    if (allHistory.length === 0) {
+      ul.innerHTML = "<li>Belum ada riwayat transaksi</li>";
+      return;
+    }
+    
+    // Group by nama barang dan jumlahkan
+    const summary = {};
+    allHistory.reverse().forEach(item => {
+      if (!summary[item.nama]) {
+        summary[item.nama] = { qty: 0, total: 0 };
+      }
+      summary[item.nama].qty += item.jumlah;
+      summary[item.nama].total += (item.harga * item.jumlah);
+    });
+    
+    // Tampilkan hasil grouping
+    for (const [nama, data] of Object.entries(summary)) {
+      const li = document.createElement("li");
+      li.textContent = `${nama} x${data.qty} = Rp${data.total.toLocaleString("id-ID")}`;
+      ul.appendChild(li);
+    }
+    
+    // Hitung total
+    const totalSemua = Object.values(summary).reduce((sum, item) => sum + item.total, 0);
+    const liTotal = document.createElement("li");
+    liTotal.innerHTML = `<strong>TOTAL: Rp${totalSemua.toLocaleString("id-ID")}</strong>`;
+    liTotal.style.backgroundColor = "#f8f9fa";
+    ul.appendChild(liTotal);
+  } catch (error) {
+    console.error("Error loading history:", error);
+    ul.innerHTML = "<li>Error memuat riwayat</li>";
+  }
+}
+
+async function resetRiwayat() {
+  if (confirm("Yakin ingin menghapus semua riwayat transaksi?")) {
+    try {
+      await dbOperation(stores.RIWAYAT, "readwrite", (store) => {
+        return store.clear();
+      });
+      refreshRiwayat();
+      updateStorageInfo();
+    } catch (error) {
+      console.error("Error clearing history:", error);
+      alert("Gagal menghapus riwayat.");
+    }
+  }
+}
+
+// Product management
+async function tambahBarangBaru() {
+  const nama = document.getElementById('namaBarang').value.trim().toUpperCase();
+  const harga = parseInt(document.getElementById('hargaBarang').value.replace(/\./g, ''));
+  const stok = parseInt(document.getElementById('stokBarang').value) || 0;
+  
+  if (!nama || isNaN(harga) || harga <= 0) {
+    alert("Nama barang dan harga harus diisi!");
+    return;
+  }
+  
+  try {
+    // Check if item exists
+    const existingItem = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.get(nama);
+    });
+    
+    if (existingItem) {
+      if (confirm(`Barang "${nama}" sudah ada. Update data?`)) {
+        await dbOperation(stores.BARANG, "readwrite", (store) => {
+          const updatedItem = {
+            ...existingItem,
+            harga: harga,
+            stok: existingItem.stok + stok
+          };
+          return store.put(updatedItem);
+        });
+        alert(`✅ Barang "${nama}" berhasil diupdate!`);
+      }
+    } else {
+      await dbOperation(stores.BARANG, "readwrite", (store) => {
+        return store.put({ nama, harga, stok, barcode: "" });
+      });
+      alert(`✅ Barang "${nama}" berhasil ditambahkan!`);
+    }
+    
+    // Reset form
+    document.getElementById('namaBarang').value = '';
+    document.getElementById('hargaBarang').value = '';
+    document.getElementById('stokBarang').value = '';
+    
+    // Refresh UI
+    searchItem();
+    isiDropdownBarang();
+    isiDropdownBarangHarga();
+    isiDatalistBarcode();
+    updateStorageInfo();
+  } catch (error) {
+    console.error("Error adding product:", error);
+    alert("Gagal menyimpan barang.");
+  }
+}
+
+async function isiDropdownBarang() {
+  const datalist = document.getElementById('daftarBarang');
+  datalist.innerHTML = '';
+  
+  try {
+    const allItems = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.getAll();
+    });
+    
+    allItems.forEach(barang => {
+      const option = document.createElement('option');
+      option.value = barang.nama;
+      option.textContent = `${barang.nama} (Stok: ${barang.stok})`;
+      datalist.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading products:", error);
+  }
+}
+
+async function tambahStokBarang() {
+  const namaBarang = document.getElementById('cariBarang').value.trim().toUpperCase();
+  const jumlah = parseInt(document.getElementById('jumlahTambahStok').value) || 0;
+  
+  if (!namaBarang || jumlah <= 0) {
+    alert("Pilih barang dan isi jumlah yang valid!");
+    return;
+  }
+  
+  try {
+    const item = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.get(namaBarang);
+    });
+    
+    if (item) {
+      await dbOperation(stores.BARANG, "readwrite", (store) => {
+        const updatedItem = { ...item, stok: item.stok + jumlah };
+        return store.put(updatedItem);
+      });
+      
+      alert(`✅ Stok ${namaBarang} ditambah ${jumlah}. Total sekarang: ${item.stok + jumlah}`);
+      document.getElementById('jumlahTambahStok').value = '';
+      searchItem();
+      isiDropdownBarang();
+      updateStorageInfo();
+    } else {
+      alert(`❌ Barang "${namaBarang}" tidak ditemukan!`);
+    }
+  } catch (error) {
+    console.error("Error updating stock:", error);
+    alert("Gagal menambah stok.");
+  }
+}
+
+// Price management
+async function isiDropdownBarangHarga() {
+  const datalist = document.getElementById('daftarBarangHarga');
+  datalist.innerHTML = '';
+  
+  try {
+    const allItems = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.getAll();
+    });
+    
+    allItems.forEach(barang => {
+      const option = document.createElement('option');
+      option.value = barang.nama;
+      option.textContent = `${barang.nama} (Harga: Rp${barang.harga.toLocaleString('id-ID')})`;
+      datalist.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading products:", error);
+  }
+}
+
+async function updateHargaBarang() {
+  const namaBarang = document.getElementById('cariBarangHarga').value.trim().toUpperCase();
+  const hargaBaru = parseInt(document.getElementById('hargaBaru').value.replace(/\./g, ''));
+  
+  if (!namaBarang || isNaN(hargaBaru)) {
+    alert("Pilih barang dan isi harga baru yang valid!");
+    return;
+  }
+  
+  try {
+    const item = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.get(namaBarang);
+    });
+    
+    if (item) {
+      const hargaLama = item.harga;
+      await dbOperation(stores.BARANG, "readwrite", (store) => {
+        const updatedItem = { ...item, harga: hargaBaru };
+        return store.put(updatedItem);
+      });
+      
+      alert(`✅ Harga ${namaBarang} berhasil diupdate dari Rp${hargaLama.toLocaleString('id-ID')} menjadi Rp${hargaBaru.toLocaleString('id-ID')}`);
+      
+      document.getElementById('cariBarangHarga').value = '';
+      document.getElementById('hargaBaru').value = '';
+      
+      searchItem();
+      isiDropdownBarangHarga();
+      updateStorageInfo();
+    } else {
+      alert(`❌ Barang "${namaBarang}" tidak ditemukan!`);
+    }
+  } catch (error) {
+    console.error("Error updating price:", error);
+    alert("Gagal mengupdate harga.");
+  }
+}
+
+// Barcode management
+async function isiDatalistBarcode() {
+  const datalist = document.getElementById("daftarBarangBarcode");
+  datalist.innerHTML = '';
+  
+  try {
+    const allItems = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.getAll();
+    });
+    
+    allItems.forEach(barang => {
+      if (!barang.barcode) {
+        const option = document.createElement("option");
+        option.value = barang.nama;
+        option.textContent = `${barang.nama} (Rp${barang.harga.toLocaleString('id-ID')})`;
+        datalist.appendChild(option);
+      }
+    });
+  } catch (error) {
+    console.error("Error loading products for barcode:", error);
+  }
+}
+
+async function simpanBarcode() {
+  const namaBarang = document.getElementById("cariBarangBarcode").value;
+  const barcode = document.getElementById("inputBarcode").value;
+  
+  if (!namaBarang || !barcode) {
+    document.getElementById("pesanBarcode").innerText = "❌ Pilih barang dan isi barcode!";
+    return;
+  }
+  
+  try {
+    const item = await dbOperation(stores.BARANG, "readonly", (store) => {
+      return store.get(namaBarang);
+    });
+    
+    if (item) {
+      await dbOperation(stores.BARANG, "readwrite", (store) => {
+        const updatedItem = { ...item, barcode };
+        return store.put(updatedItem);
+      });
+      
+      document.getElementById("pesanBarcode").innerHTML = 
+        `✅ <strong>${namaBarang}</strong> berhasil ditambahkan barcode: <strong>${barcode}</strong>`;
+      
+      document.getElementById("inputBarcode").value = "";
+      isiDatalistBarcode();
+    } else {
+      document.getElementById("pesanBarcode").innerText = "❌ Barang tidak ditemukan!";
+    }
+  } catch (error) {
+    console.error("Error saving barcode:", error);
+    document.getElementById("pesanBarcode").innerText = "❌ Gagal menyimpan barcode!";
+  }
+}
+
+// Export functions
+async function exportRiwayatKeTXT() {
+  try {
+    const allHistory = await dbOperation(stores.RIWAYAT, "readonly", (store) => {
+      return store.getAll();
+    });
+
+    // Filter dan kelompokkan data
+    const summary = {};
+    allHistory.forEach(item => {
+      if (!summary[item.nama]) {
+        summary[item.nama] = { qty: 0, total: 0 };
+      }
+      summary[item.nama].qty += item.jumlah;
+      summary[item.nama].total += (item.harga * item.jumlah);
+    });
+
+    // Hitung total omset
+    const totalOmset = Object.values(summary).reduce((sum, item) => sum + item.total, 0);
+    const labaBersih = totalOmset * 0.1; // Asumsi laba 10%
+
+    // Format isi file
+    let txtContent = `
+===============================
+      WARUNG AL SAKHO      
+  Bayalangu Kidul, Kab. Cirebon  
+===============================
+         RIWAYAT BELANJA        
+===============================
+Tanggal: ${new Date().toLocaleDateString('id-ID')}
+
+`;
+
+    // Tambahkan item per transaksi
+    Object.entries(summary).forEach(([nama, data]) => {
+      txtContent += `Nama: ${nama}\n`;
+      txtContent += `Jual: Rp${data.total.toLocaleString('id-ID')} (${data.qty} pcs)\n`;
+      txtContent += "----------------------------\n";
+    });
+
+    txtContent += `
+===============================
+ TOTAL OMZET: Rp${totalOmset.toLocaleString('id-ID')}
+ LABA BERSIH (10%): Rp${labaBersih.toLocaleString('id-ID')}  
+===============================
+`;
+
+    // Download file
+    const blob = new Blob([txtContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Laporan_Al_Sakho_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error exporting history:", error);
+    alert("Gagal mengekspor riwayat: " + error.message);
+  }
+}
+async function backupDataKeCSV() {
+  try {
+    // Ambil data dari IndexedDB
+    const [barangData, riwayatData] = await Promise.all([
+      dbOperation(stores.BARANG, "readonly", (store) => store.getAll()),
+      dbOperation(stores.RIWAYAT, "readonly", (store) => store.getAll())
+    ]);
+
+    // 1. Buat CSV untuk Data Barang
+    let csvBarang = 'Nama,Harga,Stok,Barcode\n'; // Header
+    barangData.forEach(item => {
+      csvBarang += `"${item.nama}",${item.harga},${item.stok},"${item.barcode || ''}"\n`;
+    });
+
+    // 2. Buat CSV untuk Riwayat Transaksi
+    let csvRiwayat = 'Tanggal,Nama Barang,Jumlah,Harga,Total\n'; // Header
+    riwayatData.forEach(item => {
+      const total = item.harga * item.jumlah;
+      const tanggal = new Date(item.timestamp).toLocaleString('id-ID');
+      csvRiwayat += `"${tanggal}","${item.nama}",${item.jumlah},${item.harga},${total}\n`;
+    });
+
+    // 3. Gabungkan kedua CSV
+    const csvContent = `=== DATA BARANG ===\n${csvBarang}\n\n=== RIWAYAT TRANSAKSI ===\n${csvRiwayat}`;
+
+    // 4. Buat file dan download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `backup-warung-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    alert(`✅ Backup CSV berhasil! (${barangData.length} barang, ${riwayatData.length} transaksi)`);
+  } catch (error) {
+    console.error('Error backup CSV:', error);
+    alert('❌ Gagal membuat backup CSV: ' + error.message);
+  }
+}
+async function backupData() {
+  try {
+    const [barangData, riwayatData] = await Promise.all([
+      dbOperation(stores.BARANG, "readonly", (store) => store.getAll()),
+      dbOperation(stores.RIWAYAT, "readonly", (store) => store.getAll())
+    ]);
+    
+    const data = {
+      stokBarang: barangData,
+      riwayatBelanja: riwayatData,
+      tanggalBackup: new Date().toLocaleString("id-ID")
+    };
+    
+    const jsonData = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `backup-warung-al-sakho-${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    
+    alert(`✅ Backup sukses! (${barangData.length} barang, ${riwayatData.length} transaksi)`);
+  } catch (error) {
+    console.error("Error during backup:", error);
+    alert("Gagal membuat backup.");
+  }
+}
+/**
+ * Handle upload file backup
+ */
+document.getElementById('restoreFile').addEventListener('change', async function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const backupData = JSON.parse(e.target.result);
+      
+      // Validasi file backup
+      if (!backupData.stokBarang || !backupData.riwayatBelanja) {
+        throw new Error("Format file backup tidak valid");
+      }
+
+      // Konfirmasi pengguna
+      if (!confirm(`Anda akan memulihkan:\n- ${backupData.stokBarang.length} barang\n- ${backupData.riwayatBelanja.length} transaksi\nLanjutkan?`)) {
+        return;
+      }
+
+      // Proses restore
+      const result = await restoreBackupData(backupData);
+      
+      alert(`✅ Restore berhasil!\n- Barang: ${result.barangRestored}/${backupData.stokBarang.length}\n- Transaksi: ${result.riwayatRestored}/${backupData.riwayatBelanja.length}`);
+      
+      // Refresh UI
+      searchItem();
+      refreshKeranjang();
+      refreshRiwayat();
+      updateStorageInfo();
+
+    } catch (error) {
+      console.error("Restore error:", error);
+      alert(`❌ Gagal restore: ${error.message}`);
+    } finally {
+      event.target.value = ''; // Reset input
+    }
+  };
+  reader.readAsText(file);
+});
+
+/**
+ * Fungsi utama restore data (autoIncrement compatible)
+ */
+async function restoreBackupData(backupData) {
+  let barangRestored = 0;
+  let riwayatRestored = 0;
+
+  // 1. Restore Barang (dengan cek duplikat)
+  for (const barang of backupData.stokBarang) {
+    try {
+      const existing = await dbOperation(stores.BARANG, "readonly", (store) => {
+        return store.get(barang.nama);
+      });
+
+      if (!existing) {
+        await dbOperation(stores.BARANG, "readwrite", (store) => {
+          return store.put(barang);
+        });
+        barangRestored++;
+      }
+    } catch (error) {
+      console.error(`Gagal restore barang ${barang.nama}:`, error);
+    }
+  }
+
+  // 2. Restore Riwayat (optimized untuk autoIncrement)
+  for (const transaksi of backupData.riwayatBelanja) {
+    try {
+      // Cek duplikat berdasarkan timestamp + nama
+      const isDuplicate = await dbOperation(stores.RIWAYAT, "readonly", (store) => {
+        const index = store.index("by_timestamp_nama"); // Pastikan index ini ada!
+        return index.get([transaksi.timestamp, transaksi.nama]);
+      });
+
+      if (!isDuplicate) {
+        await dbOperation(stores.RIWAYAT, "readwrite", (store) => {
+          return store.add({
+            nama: transaksi.nama,
+            jumlah: transaksi.jumlah,
+            harga: transaksi.harga,
+            timestamp: transaksi.timestamp,
+            catatan: transaksi.catatan || `${transaksi.nama} x${transaksi.jumlah} = Rp${(transaksi.harga * transaksi.jumlah).toLocaleString('id-ID')}`
+          });
+        });
+        riwayatRestored++;
+      }
+    } catch (error) {
+      console.error(`Gagal restore transaksi ${transaksi.nama}:`, error);
+    }
+  }
+
+  return { barangRestored, riwayatRestored };
+}
+// Utility functions
+// Config
+const STORAGE_LIMIT = 50; // 50MB
+const WARNING_THRESHOLD = 80; // 80% dari limit
+
+async function updateStorageInfo() {
+  try {
+    // Hitung total record
+    const [barangCount, keranjangCount, riwayatCount] = await Promise.all([
+      dbOperation(stores.BARANG, "readonly", (store) => store.count()),
+      dbOperation(stores.KERANJANG, "readonly", (store) => store.count()),
+      dbOperation(stores.RIWAYAT, "readonly", (store) => store.count())
+    ]);
+
+    // Estimasi penggunaan (1 record ≈ 1.5KB)
+    const usedMB = (barangCount + keranjangCount + riwayatCount) * 1.5 / 1024;
+    const percent = Math.round((usedMB / STORAGE_LIMIT) * 100);
+
+    // Update UI
+    document.getElementById('storageUsed').style.width = `${percent}%`;
+    document.getElementById('storageText').textContent = 
+      `${percent}% terpakai (${usedMB.toFixed(1)}MB / ${STORAGE_LIMIT}MB)`;
+
+    // Tampilkan peringatan jika hampir penuh
+    if (percent >= WARNING_THRESHOLD) {
+      showStorageWarning(percent, usedMB);
+    }
+  } catch (error) {
+    console.error("Error update storage info:", error);
+  }
+}
+
+function showStorageWarning(percent, usedMB) {
+  const warningDiv = document.createElement('div');
+  warningDiv.className = 'storage-warning';
+  warningDiv.innerHTML = `
+    ⚠️ <strong>Peringatan!</strong> 
+    Penyimpanan mencapai ${percent}% (${usedMB.toFixed(1)}MB).
+    <button onclick="backupData()" class="btn-backup">
+      💾 Backup Data Sekarang
+    </button>
+    <button onclick="this.parentElement.remove()" class="btn-close">
+      ✕
+    </button>
+  `;
+  
+  document.querySelector('.container').prepend(warningDiv);
+  
+  setTimeout(() => warningDiv.remove(), 30000);
+}
+function formatUangMasuk(el) {
+  let value = el.value.replace(/\D/g, '');
+  el.value = parseInt(value || 0).toLocaleString('id-ID');
+  hitungKembalian();
+}
+
+function hitungKembalian() {
+  const totalText = document.getElementById('totalHarga').innerText.replace(/\D/g, '');
+  const total = parseInt(totalText) || 0;
+  const uangInput = document.getElementById('uangDibayar').value.replace(/\D/g, '');
+  const dibayar = parseInt(uangInput) || 0;
+  const kembalian = dibayar - total;
+  document.getElementById('kembalian').innerText = kembalian >= 0 ? 'Rp' + kembalian.toLocaleString('id-ID') : 'Uang Belum Cukup';
+}
+
+function formatRupiah(input) {
+  let value = input.value.replace(/\D/g, '');
+  if (value.length > 0) {
+    value = parseInt(value).toLocaleString('id-ID');
+  }
+  input.value = value;
+}
+
+function validasiAngka(input) {
+  input.value = input.value.replace(/\D/g, '');
+}
+let currentChart = null;
+
+async function tampilkanChart(jenisChart, event = null) {
+  const ctx = document.getElementById('warungChart').getContext('2d');
+  if (!db) {
+    console.warn("DB belum ready, coba init ulang...");
+    db = await initDB();
+  }
+  // Hancurkan chart sebelumnya jika ada
+  if (currentChart) {
+    currentChart.destroy();
+  }
+  
+  // Update active tab
+  if (event) {
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+  }
+  
+  // Ambil data dari IndexedDB
+  const riwayatData = await dbOperation(stores.RIWAYAT, "readonly", (store) => store.getAll());
+  const barangData = await dbOperation(stores.BARANG, "readonly", (store) => store.getAll());
+
+  switch (jenisChart) {
+    case 'omset':
+      // Chart Omset Bulanan
+      const omsetData = hitungOmsetPerBulan(riwayatData);
+      currentChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(omsetData),
+          datasets: [{
+            label: 'Omset per Bulan (Rp)',
+            data: Object.values(omsetData),
+            backgroundColor: '#3498db'
+          }]
+        },
+        options: { /* ... */ }
+      });
+      break;
+
+    case 'produk-laris':
+      // Chart Produk Terlaris (Top 5)
+      const produkLaris = hitungProdukTerlaris(riwayatData, barangData);
+      currentChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: produkLaris.map(item => item.nama),
+          datasets: [{
+            data: produkLaris.map(item => item.total),
+            backgroundColor: ['#2ecc71', '#3498db', '#f39c12', '#e74c3c', '#9b59b6']
+          }]
+        }
+      });
+      break;
+
+    case 'laba':
+      // Chart Laba (Contoh: asumsi laba 20%)
+      const labaData = hitungOmsetPerBulan(riwayatData);
+      const labaValues = Object.values(labaData).map(omset => omset * 0.2);
+      currentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Object.keys(labaData),
+          datasets: [{
+            label: 'Laba per Bulan (Rp)',
+            data: labaValues,
+            borderColor: '#27ae60',
+            fill: false
+          }]
+        }
+      });
+      break;
+  }
+}
+
+// Fungsi helper
+function hitungOmsetPerBulan(data) {
+  const result = {};
+  data.forEach(item => {
+    const bulan = new Date(item.timestamp).toLocaleString('id-ID', { month: 'short', year: 'numeric' });
+    result[bulan] = (result[bulan] || 0) + (item.harga * item.jumlah);
+  });
+  return result;
+}
+function hitungProdukTerlaris(riwayatData, barangData) {
+  // 1. Hitung total penjualan per produk
+  const summary = {};
+  
+  riwayatData.forEach(transaksi => {
+    if (!summary[transaksi.nama]) {
+      summary[transaksi.nama] = {
+        nama: transaksi.nama,
+        total: 0,
+        jumlah: 0,
+        harga: transaksi.harga
+      };
+    }
+    summary[transaksi.nama].total += transaksi.harga * transaksi.jumlah;
+    summary[transaksi.nama].jumlah += transaksi.jumlah;
+  });
+
+  // 2. Konversi ke array dan urutkan dari terbesar
+  const produkArray = Object.values(summary);
+  produkArray.sort((a, b) => b.total - a.total);
+
+  // 3. Ambil top 5 produk
+  const top5Produk = produkArray.slice(0, 5);
+
+  // 4. Tambahkan data stok dari database barang
+  top5Produk.forEach(produk => {
+    const infoBarang = barangData.find(b => b.nama === produk.nama);
+    produk.stok = infoBarang ? infoBarang.stok : 0;
+  });
+
+  return top5Produk;
+}
+const modal = document.getElementById("chartModal");
+
+// Buka modal
+document.getElementById("btnBukaChart").addEventListener("click", function() {
+  modal.style.display = "block";
+  tampilkanChart('omset'); // Load chart default
+});
+
+// Tutup modal
+document.querySelector(".close").addEventListener("click", function() {
+  modal.style.display = "none";
+  if (currentChart) {
+    currentChart.destroy();
+    currentChart = null;
+  }
+});
+// Tutup modal kalau klik di luar area
+window.addEventListener("click", function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+    if (currentChart) {
+      currentChart.destroy();
+      currentChart = null;
+    }
+  }
+});
+// Barcode scanner functions (same as before)
+let html5QrCode;
+let scannerActive = false;
+
+function toggleScanner() {
+  const scannerContainer = document.getElementById("scanner-container");
+  
+  if (!scannerActive) {
+    scannerContainer.style.display = "block";
+    startScanner();
+    scannerActive = true;
+  } else {
+    scannerContainer.style.display = "none";
+    stopScanner();
+    scannerActive = false;
+  }
+}
+
+function startScanner() {
+  html5QrCode = new Html5Qrcode("qr-reader");
+  
+  const config = { 
+    fps: 10,
+    qrbox: { width: 250, height: 150 }
+  };
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    config,
+    (barcode) => {
+      handleBarcode(barcode);
+    },
+    (error) => {
+      console.error("Scanner error:", error);
+    }
+  ).catch(err => {
+    alert("Error kamera: " + err);
+  });
+}
+
+function stopScanner() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(() => {
+      console.log("Scanner stopped");
+    }).catch(err => {
+      console.error("Gagal stop scanner:", err);
+    });
+  }
+}
+
+async function handleBarcode(barcode) {
+  try {
+    // Find item by barcode
+    const item = await dbOperation(stores.BARANG, "readonly", (store) => {
+      const index = store.index("by_barcode");
+      return index.get(barcode);
+    });
+    
+    if (item) {
+      // Check stock
+      if (item.stok < 1) {
+        alert(`❌ Stok ${item.nama} sudah habis!`);
+        return;
+      }
+      
+      // Update stock
+      await dbOperation(stores.BARANG, "readwrite", (store) => {
+        const updatedItem = { ...item, stok: item.stok - 1 };
+        return store.put(updatedItem);
+      });
+      
+      // Add to cart (TANPA membuat riwayat)
+      const existingItem = await dbOperation(stores.KERANJANG, "readonly", (store) => {
+        return store.get(item.nama);
+      });
+      
+      if (existingItem) {
+        await dbOperation(stores.KERANJANG, "readwrite", (store) => {
+          const updatedItem = { ...existingItem, jumlah: existingItem.jumlah + 1 };
+          return store.put(updatedItem);
+        });
+      } else {
+        await dbOperation(stores.KERANJANG, "readwrite", (store) => {
+          return store.put({ ...item, jumlah: 1 });
+        });
+      }
+      
+      // Update UI
+      refreshKeranjang();
+      searchItem();
+      alert(`✅ ${item.nama} ditambahkan!`);
+    } else {
+      alert("❌ Barang tidak ditemukan! Tambahkan barcode di menu Input Barang.");
+    }
+  } catch (error) {
+    console.error("Error handling barcode:", error);
+    alert("Gagal memproses barcode.");
+  }
+}
+
+// Initialize the app when the page loads
+// Panggil initializeApp() saat load
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    await initializeApp();
+    loadUI();
+    console.log("Aplikasi siap digunakan!");
+  } catch (e) {
+    console.error("Aplikasi gagal dimulai:", e);
+  }
+});
+// Cek quota real storage
+navigator.storage.estimate().then(({ quota }) => {
+  console.log(`Quota tersedia: ${Math.round(quota/(1024*1024))}MB`);
+});
+
+// Jalankan di Console
+const req = indexedDB.open("TestDB");
+req.onupgradeneeded = (e) => {
+  e.target.result.createObjectStore("test");
+  console.log("Database test dibuat!");
+};
+req.onsuccess = () => console.log("Koneksi OK!");
+// Tampilkan semua database IndexedDB
+indexedDB.databases().then(dbs => {
+  console.log("Daftar Database:", dbs);
+});
+async function checkStorage() {
+  try {
+    // Buka database
+    const dbName = "WarungAlSakhoDB";
+    const request = indexedDB.open(dbName);
+    
+    // Tunggu database terbuka
+    const db = await new Promise((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject("Gagal buka database");
+    });
+
+    // Hitung semua data
+    const stores = ["barang", "keranjang", "riwayat"];
+    let totalSizeKB = 0;
+    const detail = [];
+    
+    console.log("🔍 Detail Kapasitas IndexedDB:");
+    for (const storeName of stores) {
+      const data = await new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, "readonly");
+        const store = tx.objectStore(storeName);
+        const request = store.getAll();
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(`Gagal baca ${storeName}`);
+      });
+      
+      const sizeKB = (JSON.stringify(data).length / 1024);
+      totalSizeKB += sizeKB;
+      detail.push({
+        name: storeName,
+        items: data.length,
+        sizeKB: parseFloat(sizeKB.toFixed(2))  // ✅ FIXED: Titik koma dihapus
+      });
+      
+      console.log(`📦 ${storeName}: ${data.length} items (${sizeKB.toFixed(2)} KB)`);
+    }
+    
+    // Hitung total storage termasuk overhead (mirip fitur pantau)
+    const storageUsage = await navigator.storage.estimate();
+    const totalUsedKB = storageUsage.usage / 1024;
+    
+    console.log("----------------------------------");
+    console.log(`💾 TOTAL (Data Mentah): ${totalSizeKB.toFixed(2)} KB`);
+    console.log(`💽 TOTAL (Real + Overhead): ${totalUsedKB.toFixed(2)} KB`);
+    console.log("----------------------------------");
+    console.log("🔹 *Real = Termasuk metadata IndexedDB");
+    
+    return { detail, totalRawKB: totalSizeKB, totalRealKB: totalUsedKB };  // ✅ FIXED: Format return
+  } catch (error) {
+    console.error("Error:", error);
+    return null;
+  }
+}
+
+// Jalankan fungsi
+checkStorage().then(result => {
+  if (result) {
+    console.log("✅ Selesai! Hasil detail:", result);
+  }
+});
+// ✅ Versi baru dengan animasi
+function toggleMenu() {
+  const menu = document.getElementById("menuActions");
+  menu.classList.toggle("show"); // Pakai class CSS untuk animasi
+}
+</script>
+</body>
+</html>
